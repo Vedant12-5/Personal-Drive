@@ -1,0 +1,11 @@
+# Ignore node_modules folders everywhere
+node_modules/
+
+# Ignore Python virtual environment folders
+venv/
+
+# Ignore Python cache files and folders
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
