@@ -11,7 +11,12 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Personal Drive"
     
     # Storage configuration
-    STORAGE_DIR: str = os.path.join(ROOT_DIR, "storage")
+    # For local development:
+    # STORAGE_DIR: str = os.path.join(ROOT_DIR, "storage")
+    
+    # For external hard drive (uncomment and modify this line when ready):
+    STORAGE_DIR: str = "/Volumes/Personal Use/personal_drive_storage"
+    
     MAX_UPLOAD_SIZE: int = 1024 * 1024 * 1024  # 1GB max file size
     
     # Database

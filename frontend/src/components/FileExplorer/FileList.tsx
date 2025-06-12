@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { useParams } from 'react-router-dom';
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "react-query";
+import { useParams } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -18,85 +18,98 @@ import {
   TextField,
   Breadcrumbs,
   Link,
-  Divider
-} from '@mui/material';
-import FolderIcon from '@mui/icons-material/Folder';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
-import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { getFolderContents, createFolder, deleteFolder, deleteFile, updateFolder, updateFile } from '../../services/api';
-import { formatFileSize } from '../../utils/fileUtils';
-import FileUploader from './FileUploader';
+  Divider,
+} from "@mui/material";
+import FolderIcon from "@mui/icons-material/Folder";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import CreateNewFolderIcon from "@mui/icons-material/CreateNewFolder";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import {
+  getFolderContents,
+  createFolder,
+  deleteFolder,
+  deleteFile,
+  updateFolder,
+  updateFile,
+} from "../../services/api";
+import { formatFileSize } from "../../utils/fileUtils";
+import FileUploader from "./FileUploader";
 
 const FileList: React.FC = () => {
   const { folderId } = useParams<{ folderId: string }>();
   const queryClient = useQueryClient();
   const currentFolderId = folderId ? parseInt(folderId) : null;
-  
+
   // State for context menu
   const [contextMenu, setContextMenu] = useState<{
     mouseX: number;
     mouseY: number;
-    type: 'file' | 'folder';
+    type: "file" | "folder";
     id: number;
     name: string;
   } | null>(null);
-  
+
   // State for dialogs
-  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false);
+  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] =
+    useState(false);
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  
+  const [newName, setNewName] = useState("");
+
   // Fetch folder contents
   const { data, isLoading, error } = useQuery(
-    ['folderContents', currentFolderId],
-    () => currentFolderId ? getFolderContents(currentFolderId) : null,
+    ["folderContents", currentFolderId],
+    () => (currentFolderId ? getFolderContents(currentFolderId) : null),
     { enabled: !!currentFolderId }
   );
-  
+
   // Mutations
   const createFolderMutation = useMutation(createFolder, {
     onSuccess: () => {
-      queryClient.invalidateQueries(['folderContents', currentFolderId]);
+      queryClient.invalidateQueries(["folderContents", currentFolderId]);
     },
   });
-  
+
   const deleteFolderMutation = useMutation(deleteFolder, {
     onSuccess: () => {
-      queryClient.invalidateQueries(['folderContents', currentFolderId]);
+      queryClient.invalidateQueries(["folderContents", currentFolderId]);
     },
   });
-  
+
   const deleteFileMutation = useMutation(deleteFile, {
     onSuccess: () => {
-      queryClient.invalidateQueries(['folderContents', currentFolderId]);
+      queryClient.invalidateQueries(["folderContents", currentFolderId]);
     },
   });
-  
+
   const renameFolderMutation = useMutation(
     ({ id, name }: { id: number; name: string }) => updateFolder(id, { name }),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(['folderContents', currentFolderId]);
+        queryClient.invalidateQueries(["folderContents", currentFolderId]);
       },
     }
   );
-  
+
   const renameFileMutation = useMutation(
     ({ id, name }: { id: number; name: string }) => updateFile(id, { name }),
     {
       onSuccess: () => {
-        queryClient.invalidateQueries(['folderContents', currentFolderId]);
+        queryClient.invalidateQueries(["folderContents", currentFolderId]);
       },
     }
   );
-  
+
   // Handle context menu
-  const handleContextMenu = (event: React.MouseEvent, type: 'file' | 'folder', id: number, name: string) => {
+  const handleContextMenu = (
+    event: React.MouseEvent,
+    type: "file" | "folder",
+    id: number,
+    name: string
+  ) => {
     event.preventDefault();
     setContextMenu({
       mouseX: event.clientX - 2,
@@ -106,11 +119,11 @@ const FileList: React.FC = () => {
       name,
     });
   };
-  
+
   const handleContextMenuClose = () => {
     setContextMenu(null);
   };
-  
+
   // Handle create folder
   const handleCreateFolder = async () => {
     if (newName.trim() && currentFolderId) {
@@ -118,15 +131,15 @@ const FileList: React.FC = () => {
         name: newName,
         parent_id: currentFolderId,
       });
-      setNewName('');
+      setNewName("");
       setIsCreateFolderDialogOpen(false);
     }
   };
-  
+
   // Handle rename
   const handleRename = async () => {
     if (newName.trim() && contextMenu) {
-      if (contextMenu.type === 'folder') {
+      if (contextMenu.type === "folder") {
         await renameFolderMutation.mutateAsync({
           id: contextMenu.id,
           name: newName,
@@ -137,15 +150,15 @@ const FileList: React.FC = () => {
           name: newName,
         });
       }
-      setNewName('');
+      setNewName("");
       setIsRenameDialogOpen(false);
     }
   };
-  
+
   // Handle delete
   const handleDelete = async () => {
     if (contextMenu) {
-      if (contextMenu.type === 'folder') {
+      if (contextMenu.type === "folder") {
         await deleteFolderMutation.mutateAsync(contextMenu.id);
       } else {
         await deleteFileMutation.mutateAsync(contextMenu.id);
@@ -153,31 +166,33 @@ const FileList: React.FC = () => {
       handleContextMenuClose();
     }
   };
-  
+
   // Handle file download
   const handleFileDownload = (downloadUrl: string) => {
     // Check if the URL is relative or absolute
-    if (downloadUrl.startsWith('/')) {
+    if (downloadUrl.startsWith("/")) {
       // Construct the full URL to the backend
-      const backendUrl = 'http://localhost:8000';
+      const backendUrl =
+        process.env.REACT_APP_API_URL?.replace("/api", "") ||
+        "http://localhost:8000";
       const fullUrl = `${backendUrl}${downloadUrl}`;
-      console.log('Opening file URL:', fullUrl);
-      window.open(fullUrl, '_blank');
+      console.log("Opening file URL:", fullUrl);
+      window.open(fullUrl, "_blank");
     } else {
       // URL is already absolute
-      console.log('Opening file URL:', downloadUrl);
-      window.open(downloadUrl, '_blank');
+      console.log("Opening file URL:", downloadUrl);
+      window.open(downloadUrl, "_blank");
     }
   };
-  
+
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
         <CircularProgress />
       </Box>
     );
   }
-  
+
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
@@ -185,7 +200,7 @@ const FileList: React.FC = () => {
       </Box>
     );
   }
-  
+
   if (!data && currentFolderId) {
     return (
       <Box sx={{ p: 3 }}>
@@ -193,7 +208,7 @@ const FileList: React.FC = () => {
       </Box>
     );
   }
-  
+
   // If no folder is selected (root view)
   if (!currentFolderId) {
     return (
@@ -205,18 +220,18 @@ const FileList: React.FC = () => {
       </Box>
     );
   }
-  
+
   return (
     <Box sx={{ p: 2 }}>
       {/* Breadcrumbs */}
-      <Breadcrumbs 
-        separator={<NavigateNextIcon fontSize="small" />} 
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" />}
         aria-label="breadcrumb"
         sx={{ mb: 3 }}
       >
-        <Link 
-          color="inherit" 
-          href="#" 
+        <Link
+          color="inherit"
+          href="#"
           onClick={(e) => {
             e.preventDefault();
             // Navigate to parent folder logic would go here
@@ -226,9 +241,9 @@ const FileList: React.FC = () => {
         </Link>
         <Typography color="text.primary">{data?.name}</Typography>
       </Breadcrumbs>
-      
+
       {/* Action buttons */}
-      <Box sx={{ display: 'flex', mb: 2 }}>
+      <Box sx={{ display: "flex", mb: 2 }}>
         <Button
           variant="contained"
           startIcon={<CreateNewFolderIcon />}
@@ -245,13 +260,15 @@ const FileList: React.FC = () => {
           Upload Files
         </Button>
       </Box>
-      
+
       <Divider sx={{ my: 2 }} />
-      
+
       {/* Folders */}
       {data?.subfolders && data.subfolders.length > 0 && (
         <>
-          <Typography variant="h6" sx={{ mb: 1 }}>Folders</Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Folders
+          </Typography>
           <Grid container spacing={2}>
             {data.subfolders.map((folder) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={folder.id}>
@@ -259,23 +276,27 @@ const FileList: React.FC = () => {
                   elevation={2}
                   sx={{
                     p: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' },
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "action.hover" },
                   }}
-                  onClick={() => window.location.href = `/folders/${folder.id}`}
-                  onContextMenu={(e) => handleContextMenu(e, 'folder', folder.id, folder.name)}
+                  onClick={() =>
+                    (window.location.href = `/folders/${folder.id}`)
+                  }
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, "folder", folder.id, folder.name)
+                  }
                 >
                   <FolderIcon color="primary" sx={{ fontSize: 40, mr: 2 }} />
-                  <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
                     <Typography noWrap>{folder.name}</Typography>
                   </Box>
                   <IconButton
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleContextMenu(e, 'folder', folder.id, folder.name);
+                      handleContextMenu(e, "folder", folder.id, folder.name);
                     }}
                   >
                     <MoreVertIcon />
@@ -287,11 +308,13 @@ const FileList: React.FC = () => {
           <Divider sx={{ my: 2 }} />
         </>
       )}
-      
+
       {/* Files */}
       {data?.files && data.files.length > 0 && (
         <>
-          <Typography variant="h6" sx={{ mb: 1 }}>Files</Typography>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Files
+          </Typography>
           <Grid container spacing={2}>
             {data.files.map((file) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={file.id}>
@@ -299,16 +322,21 @@ const FileList: React.FC = () => {
                   elevation={2}
                   sx={{
                     p: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' },
+                    display: "flex",
+                    alignItems: "center",
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "action.hover" },
                   }}
                   onClick={() => handleFileDownload(file.download_url)}
-                  onContextMenu={(e) => handleContextMenu(e, 'file', file.id, file.name)}
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, "file", file.id, file.name)
+                  }
                 >
-                  <InsertDriveFileIcon color="info" sx={{ fontSize: 40, mr: 2 }} />
-                  <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+                  <InsertDriveFileIcon
+                    color="info"
+                    sx={{ fontSize: 40, mr: 2 }}
+                  />
+                  <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
                     <Typography noWrap>{file.name}</Typography>
                     <Typography variant="caption" color="text.secondary">
                       {formatFileSize(file.size)}
@@ -319,7 +347,7 @@ const FileList: React.FC = () => {
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleContextMenu(e, 'file', file.id, file.name);
+                        handleContextMenu(e, "file", file.id, file.name);
                       }}
                     >
                       <MoreVertIcon />
@@ -340,20 +368,20 @@ const FileList: React.FC = () => {
           </Grid>
         </>
       )}
-      
+
       {/* Empty state */}
-      {(!data?.subfolders || data.subfolders.length === 0) && 
-       (!data?.files || data.files.length === 0) && (
-        <Box sx={{ textAlign: 'center', py: 5 }}>
-          <Typography variant="h6" color="text.secondary">
-            This folder is empty
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Upload files or create folders to get started
-          </Typography>
-        </Box>
-      )}
-      
+      {(!data?.subfolders || data.subfolders.length === 0) &&
+        (!data?.files || data.files.length === 0) && (
+          <Box sx={{ textAlign: "center", py: 5 }}>
+            <Typography variant="h6" color="text.secondary">
+              This folder is empty
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Upload files or create folders to get started
+            </Typography>
+          </Box>
+        )}
+
       {/* Context Menu */}
       <Menu
         open={contextMenu !== null}
@@ -367,7 +395,7 @@ const FileList: React.FC = () => {
       >
         <MenuItem
           onClick={() => {
-            setNewName(contextMenu?.name || '');
+            setNewName(contextMenu?.name || "");
             setIsRenameDialogOpen(true);
             handleContextMenuClose();
           }}
@@ -376,9 +404,12 @@ const FileList: React.FC = () => {
         </MenuItem>
         <MenuItem onClick={handleDelete}>Delete</MenuItem>
       </Menu>
-      
+
       {/* Create Folder Dialog */}
-      <Dialog open={isCreateFolderDialogOpen} onClose={() => setIsCreateFolderDialogOpen(false)}>
+      <Dialog
+        open={isCreateFolderDialogOpen}
+        onClose={() => setIsCreateFolderDialogOpen(false)}
+      >
         <DialogTitle>Create New Folder</DialogTitle>
         <DialogContent>
           <TextField
@@ -393,14 +424,23 @@ const FileList: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsCreateFolderDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreateFolder} variant="contained">Create</Button>
+          <Button onClick={() => setIsCreateFolderDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleCreateFolder} variant="contained">
+            Create
+          </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Rename Dialog */}
-      <Dialog open={isRenameDialogOpen} onClose={() => setIsRenameDialogOpen(false)}>
-        <DialogTitle>Rename {contextMenu?.type === 'folder' ? 'Folder' : 'File'}</DialogTitle>
+      <Dialog
+        open={isRenameDialogOpen}
+        onClose={() => setIsRenameDialogOpen(false)}
+      >
+        <DialogTitle>
+          Rename {contextMenu?.type === "folder" ? "Folder" : "File"}
+        </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -415,25 +455,30 @@ const FileList: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsRenameDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleRename} variant="contained">Rename</Button>
+          <Button onClick={handleRename} variant="contained">
+            Rename
+          </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Upload Dialog */}
-      <Dialog 
-        open={isUploadDialogOpen} 
+      <Dialog
+        open={isUploadDialogOpen}
         onClose={() => setIsUploadDialogOpen(false)}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle>Upload Files</DialogTitle>
         <DialogContent>
-          <FileUploader 
-            folderId={currentFolderId} 
+          <FileUploader
+            folderId={currentFolderId}
             onUploadComplete={() => {
               setIsUploadDialogOpen(false);
-              queryClient.invalidateQueries(['folderContents', currentFolderId]);
-            }} 
+              queryClient.invalidateQueries([
+                "folderContents",
+                currentFolderId,
+              ]);
+            }}
           />
         </DialogContent>
         <DialogActions>
